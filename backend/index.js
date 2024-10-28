@@ -6,9 +6,7 @@ connectToMongo();
 
 const PORT = 3000;
 
-// app.get('/',(req,res)=>{
-//     res.send("Hey, Nandini")
-// });
+app.use(express.json());
 
 app.use('/api/auth',require('./routes/auth'));
 //app.use('/api/auth',require('./routes/notes'));
