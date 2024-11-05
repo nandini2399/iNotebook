@@ -5,6 +5,8 @@ const {body,validationResult} = require('express-validator')
 const bcryptjs = require('bcryptjs')
 var jwt = require('jsonwebtoken');
 
+
+const JWT_SECRET = "shhhhhhh"
 //create user "api/auth/createUser "
 router.post('/createUser',[
         body('name', 'Enter a valid name').isLength({ min: 3 }),
@@ -24,8 +26,8 @@ router.post('/createUser',[
           password: secPassword
         });
 
-        var token = jwt.sign({ id: user.id }, 'shhhhh');
-        res.json(token);
+        var authToken = jwt.sign({ id: user.id }, JWT_SECRET);
+        res.json(authToken);
       } catch (error) {
         if (error.code === 11000) {
           // Duplicate key error
@@ -35,5 +37,50 @@ router.post('/createUser',[
         res.status(500).json({ error: 'Server error' });
       }
 })
+
+
+
+//login user "api/auth/login "
+router.post('/login',[
+        body('email', "Enter a valid Email").isEmail(),
+        body('password', 'Not empty').exists(),
+    ],async (req,res)=>{
+
+      //Email Password Validation
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const {email,password} = req.body;
+
+      try{
+        let user = await User.findOne({email});
+
+        if(!user){
+          return res.status(400).json({error:"Wrong credentials"})
+        }
+
+        const passwordCompare = await bcryptjs.compare(password,user.password);
+
+        if(!passwordCompare){
+          return res.status(400).json({error:"Wrong credentials"});
+        }
+
+        const data = {
+          user:{
+            id:user.id
+          }
+        }
+
+        const authToken = jwt.sign(data,JWT_SECRET);
+        res.json({authToken});
+      }catch(error){
+        res.status(500).json({error:"Internal error occurred"})
+      }
+
+    }
+
+  );
 
 module.exports = router;
