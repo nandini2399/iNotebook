@@ -4,6 +4,7 @@ const User = require('../models/User')
 const {body,validationResult} = require('express-validator')
 const bcryptjs = require('bcryptjs')
 var jwt = require('jsonwebtoken');
+var fetchUser = require('../middleware/fetchUser');
 
 
 const JWT_SECRET = "shhhhhhh"
@@ -75,11 +76,26 @@ router.post('/login',[
 
         const authToken = jwt.sign(data,JWT_SECRET);
         res.json({authToken});
+        
       }catch(error){
         res.status(500).json({error:"Internal error occurred"})
       }
 
     }
+
+  );
+
+// get logged in user details using post "/api/auth/getUser"
+  router.post('/getUser',fetchUser,async (req,res)=>{
+    try{
+      const userId = req.user.id;
+      const user = await User.findById(userId).select("-password");
+      res.send(user);
+    } catch(error){
+      res.status(500).json({error:"Internal error occurred"})
+    }
+
+  }
 
   );
 
